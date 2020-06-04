@@ -1,0 +1,764 @@
+package screens;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Properties;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.audio.Sound;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.maps.MapObject;
+import com.badlogic.gdx.maps.MapProperties;
+import com.badlogic.gdx.math.MathUtils;
+import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
+import com.badlogic.gdx.scenes.scene2d.Event;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputEvent.Type;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Button.ButtonStyle;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+
+import base.BaseActor;
+import base.BaseGame;
+import base.BaseScreen;
+import bullets.BlueBullet;
+import bullets.GreenBullet;
+import bullets.RedBullet;
+import bullets.SmallBullet;
+import bullets.SmallBullet2;
+import bullets.SpaceBullet;
+import bullets.SpaceBullet2;
+import bullets.SpaceBulletSmall;
+import characters.Boss;
+import characters.BossLevel3;
+import characters.BossLevel4;
+import characters.BossLevel2;
+import characters.Enemy;
+import characters.Enemy2;
+import characters.Enemy3;
+import characters.EnemyKamikaze;
+import characters.Player;
+import effects.Explosion;
+import effects.Explosion2;
+import game.MyGame;
+import items.Asteroid;
+import items.Coin;
+import items.PowerUpBullet;
+import items.PowerUpBulletSmallBullet;
+import items.ShieldBall;
+import tiled.TilemapActor;
+import util.DialogBox;
+import util.Solid;
+
+public class Level4Screen extends BaseScreen{
+	private Player player;
+	private Music music;
+	private long lastShoot;
+	private long lastSmallBullet;
+	private TilemapActor tma;
+	private Sound laser;
+	private Sound star;
+	private Music win;
+	private Music lose;
+	private Label lifeLabel;
+	private Label pointsLabel;
+	private int points;
+	private DialogBox dialogBox;
+	private BaseActor lifeSpace;
+	private BossLevel4 boss;
+	private boolean gameOver;
+	private boolean bossDie;
+	private Properties properties;
+	private int basePoints;
+	private float musicVolume;
+	private float effectVolume;
+	private long lastEnemy;
+	private long lastEnemy2;
+	private long lastEnemy3;
+	private long lastEnemy4;
+	private BaseActor youWin;
+	private BaseActor gameOverTitle;
+	private Button returnButton;
+	private ButtonStyle buttonStyleReturn1;
+	private Explosion explosion;
+	private Sound explosionSound;
+	private Sound damage;
+	private Coin coin;
+	private ShieldBall shieldBall;
+	private int shieldBallCount;
+	private int starCount;
+	private boolean xBoss;
+	private boolean yBoss;
+	private float xBossPosition;
+	private float yBossPosition;
+	private PowerUpBullet powerUpBullet;
+	private boolean shootType;
+	private boolean extraShoot;
+	
+	@Override
+	public void initialize() {
+		BaseActor background = new BaseActor(0, 0, mainStage);
+		background.loadTexture("assets/backgrounds/Nebula Blue.png");
+		background.setSize(514, 44800);
+		BaseActor.setWorldBounds(background);
+		
+		shieldBallCount = 0;
+		starCount = 0;
+		xBossPosition = 0;
+		yBossPosition = 0;
+		xBoss = true;
+		yBoss = true;
+		
+		buttonStyleReturn1 = new ButtonStyle();
+		
+		Texture buttonTexReturn1 = new Texture(Gdx.files.internal("assets/buttons/buttonReturn1.png"));
+		TextureRegion buttonRegionReturn1 = new TextureRegion(buttonTexReturn1);
+		buttonStyleReturn1.up = new TextureRegionDrawable(buttonRegionReturn1);
+		
+		lifeSpace = new BaseActor(80, 645, uiStage);
+		lifeSpace.loadTexture("assets/items/spaceshipLife.png");
+		
+		//Tiled
+		tma = new TilemapActor("assets/tiled/Level4.tmx", mainStage);
+	   
+	    for(MapObject obj: tma.getTileList("Shield")) {
+	        MapProperties props = obj.getProperties();
+	        new PowerUpBullet((float)props.get("x"), (float)props.get("y"), mainStage);
+	    }
+	    
+	    for(MapObject obj: tma.getTileList("Coin")) {
+	        MapProperties props = obj.getProperties();
+	        new PowerUpBulletSmallBullet((float)props.get("x"), (float)props.get("y"), mainStage);
+	    }
+	    
+	    for(MapObject obj: tma.getTileList("Finish")) {
+	        MapProperties props = obj.getProperties();
+	        new Asteroid((float)props.get("x"), (float)props.get("y"), mainStage);
+	    }
+	        
+	    for(MapObject obj: tma.getTileList("Boss")) {
+	        MapProperties props = obj.getProperties();
+	        Boss boss = new Boss((float)props.get("x"), (float)props.get("y"), mainStage);
+	        boss.setRotation(180);
+	        boss.setLife(5);
+	    }
+        
+        MapObject startPoint = tma.getRectangleList("start").get(0);
+        MapProperties startProps = startPoint.getProperties();
+        player = new Player((float)startProps.get("x"), (float)startProps.get("y"), mainStage);
+        player.setLife(100);
+        
+        boss = new BossLevel4(0, 600, mainStage);
+        boss.setLife(1700);
+        
+        
+        //UI
+        lifeLabel = new Label("" + player.getLife(), BaseGame.labelStyle);
+        pointsLabel = new Label("" + points, BaseGame.labelStyle);
+        dialogBox = new DialogBox(0, 0, uiStage);
+        
+        uiTable.pad(10);
+        uiTable.add(lifeLabel);
+        uiTable.add().expandX();
+        uiTable.add(pointsLabel);
+        uiTable.row();
+        uiTable.add().expandY();
+        uiTable.add(dialogBox).colspan(4);
+        
+        
+		//Sound
+        laser = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/laser.ogg"));
+        star = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/star.ogg"));
+        damage = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/damage2.wav"));
+        explosionSound = Gdx.audio.newSound(Gdx.files.internal("assets/sounds/explosion.wav"));
+        lose = Gdx.audio.newMusic(Gdx.files.internal("assets/sounds/lose.wav"));
+        lose.setLooping(false);
+       
+        win = Gdx.audio.newMusic(Gdx.files.internal("assets/sounds/win.wav"));
+        win.setLooping(false);
+        
+        
+        properties = new Properties();
+        try {
+			properties.load(new FileInputStream("datos.conf"));
+			basePoints = Integer.parseInt(properties.getProperty("actualpoints4"));
+			musicVolume = Float.parseFloat(properties.getProperty("music"));
+			effectVolume = Float.parseFloat(properties.getProperty("effect"));
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+        
+        lose.setVolume(musicVolume);
+        win.setVolume(musicVolume);
+		music = Gdx.audio.newMusic(Gdx.files.internal("assets/music/Fighting Hearts.mp3"));
+		music.setLooping(true);
+        music.setVolume(musicVolume);
+        music.play();
+       
+	}
+
+	@Override
+	public void update(float dt) {
+		player.accelerateAtAngle(90);
+        player.setSpeed(200);
+        
+        lifeLabel.setText("" + player.getLife() + "x");
+        pointsLabel.setText("" + points + "Pts");
+      
+        
+        if (Gdx.input.isKeyPressed(Keys.W)) {
+        	if(shootType && extraShoot) {
+        		shootPlayerPower();
+        	}
+        	else if(shootType) {
+        		shootPlayerPower();
+        		shootPlayerSmall();
+        	}
+        	else {
+        		shootPlayer();
+        	}
+       	 
+        } 
+        
+        for(BaseActor powerUp: BaseActor.getList(mainStage, PowerUpBullet.class.getName())) {
+        	 if(player.overlaps(powerUp)) {
+             	shootType = true;
+             	powerUp.remove();
+             }
+        }
+        
+        for(BaseActor powerUp: BaseActor.getList(mainStage, PowerUpBulletSmallBullet.class.getName())) {
+       	 if(player.overlaps(powerUp)) {
+            	extraShoot = true;
+            	powerUp.remove();
+            }
+       }
+        
+        for(BaseActor boss: BaseActor.getList(mainStage, Boss.class.getName())) {
+        	boss.setX(200);
+        	if(player.isWithinDistance(500, boss)) {
+    			boss.accelerateAtAngle(90);
+    			boss.setSpeed(600);
+    		}
+        	
+        }
+        
+        for(BaseActor shield: BaseActor.getList(mainStage, ShieldBall.class.getName())) {
+        	if(player.overlaps(shield)) {
+        		player.setShieldPower(100);
+        		shield.remove();
+        	}
+        }
+        
+        for(BaseActor greenBullet: BaseActor.getList(mainStage, GreenBullet.class.getName())) {
+        	if(greenBullet.overlaps(player)) {
+        		if(!gameOver) {
+        			damage.play(effectVolume);
+        		}
+        		if(player.getShieldPower() <= 0) {
+        			player.setLife(player.getLife() - 10);
+        			greenBullet.remove();
+        			if(player.getLife() <= 0) {
+        				gameOver = true;
+        			}
+        		}
+        		else {
+        			player.setShieldPower(player.getShieldPower() - 0);
+        			greenBullet.remove();
+        		}
+        	}
+        }
+        
+        for(BaseActor blueBullet: BaseActor.getList(mainStage, BlueBullet.class.getName())) {
+        	if(blueBullet.overlaps(player)) {
+        		if(!gameOver) {
+        			damage.play(effectVolume);
+        		}
+        		if(player.getShieldPower() <= 0) {
+        			player.setLife(player.getLife() - 10);
+        			blueBullet.remove();
+        			if(player.getLife() <= 0) {
+        				gameOver = true;
+        			}
+        		}
+        		else {
+        			player.setShieldPower(player.getShieldPower() - 0);
+        			blueBullet.remove();
+        		}
+        	}
+        }
+        
+        for(BaseActor smallBullet: BaseActor.getList(mainStage, SmallBullet.class.getName())) {
+        	if(smallBullet.overlaps(player)) {
+        		if(!gameOver) {
+        			damage.play(effectVolume);
+        		}
+        		if(player.getShieldPower() <= 0) {
+        			player.setLife(player.getLife() - 10);
+        			smallBullet.remove();
+        			if(player.getLife() <= 0) {
+        				gameOver = true;
+        			}
+        		}
+        		else {
+        			player.setShieldPower(player.getShieldPower() - 5);
+        			smallBullet.remove();
+        		}
+        	}
+        }
+        
+        for(BaseActor smallBullet: BaseActor.getList(mainStage, SmallBullet2.class.getName())) {
+        	if(smallBullet.overlaps(player)) {
+        		if(!gameOver) {
+        			damage.play(effectVolume);
+        		}
+        		if(player.getShieldPower() <= 0) {
+        			player.setLife(player.getLife() - 10);
+        			smallBullet.remove();
+        			if(player.getLife() <= 0) {
+        				gameOver = true;
+        			}
+        		}
+        		else {
+        			player.setShieldPower(player.getShieldPower() - 5);
+        			smallBullet.remove();
+        		}
+        	}
+        }
+        
+        for(BaseActor purpleStar: BaseActor.getList(mainStage, Coin.class.getName())) {
+        	if(player.overlaps(purpleStar)) {
+        		purpleStar.remove();
+        		star.play(effectVolume);
+        		points = points + 10;
+        	}
+        }
+        
+        for(BaseActor asteroid: BaseActor.getList(mainStage, Asteroid.class.getName())) {
+        	if(player.overlaps(asteroid)) {
+        		explosion = new Explosion(0,0, mainStage);
+				explosion.centerAtActor(player);
+				player.remove();
+				gameOver = true;
+			}
+        }
+        
+        
+        //Power shoot
+        for(BaseActor spaceBullet: BaseActor.getList(mainStage, SpaceBullet2.class.getName())) {
+        	
+        	if(spaceBullet.overlaps(boss)) {
+        		starCount++;
+        		if(starCount == 5) {
+        			coin = new Coin(boss.getX(), boss.getY(), mainStage);
+        			starCount = 0;
+        		}
+        		
+        		shieldBallCount++;
+        		if(shieldBallCount == 10) {
+        			shieldBall = new ShieldBall(player.getX(), player.getY() + 700, mainStage);
+        			shieldBallCount = 0;
+        		}
+        		boss.setLife(boss.getLife() - 10);
+        		spaceBullet.remove();
+        		
+        		if(boss.getLife() <= 0) {
+        			Explosion2 explosion = new Explosion2(0,0, mainStage);
+    				explosion.centerAtActor(boss);
+    				explosionSound.play(effectVolume);
+        			boss.remove();
+        			bossDie = true;
+        			points = points + 50;
+        		}
+        	}
+        	
+        	for(BaseActor enemy: BaseActor.getList(mainStage, Enemy.class.getName())) {
+        		if(spaceBullet.overlaps(enemy)) {
+        			enemy.setLife(enemy.getLife() - 1);
+        			spaceBullet.remove();
+        			
+        			if(enemy.getLife() <= 0) {
+        				explosion = new Explosion(0,0, mainStage);
+        				explosion.centerAtActor(enemy);
+        				explosionSound.play(effectVolume);
+        				enemy.remove();
+        				points = points + 5;
+        			}
+        			
+        		}
+        	
+        	}
+        	
+        	for(BaseActor enemy: BaseActor.getList(mainStage, Enemy2.class.getName())) {
+        		
+        		
+        		if(spaceBullet.overlaps(enemy)) {
+        			enemy.setLife(enemy.getLife() - 1);
+        			spaceBullet.remove();
+        			if(enemy.getLife() <= 0) {
+        				explosion = new Explosion(0,0, mainStage);
+        				explosion.centerAtActor(enemy);
+        				explosionSound.play(effectVolume);
+        				enemy.remove();
+        				points = points + 5;
+        			}
+        			
+        		}
+        	
+        	}
+        	
+        	for(BaseActor enemy: BaseActor.getList(mainStage, Enemy3.class.getName())) {
+        		
+        		
+        		if(spaceBullet.overlaps(enemy)) {
+        			enemy.setLife(enemy.getLife() - 1);
+        			spaceBullet.remove();
+        			if(enemy.getLife() <= 0) {
+        				explosion = new Explosion(0,0, mainStage);
+        				explosion.centerAtActor(enemy);
+        				explosionSound.play(effectVolume);
+        				enemy.remove();
+        				points = points + 5;
+        			}
+        			
+        		}
+        		
+        	}
+        	
+
+        	for(BaseActor enemy: BaseActor.getList(mainStage, EnemyKamikaze.class.getName())) {
+        		if(spaceBullet.overlaps(enemy)) {
+        			enemy.setLife(enemy.getLife() - 1);
+        			spaceBullet.remove();
+        			if(enemy.getLife() <= 0) {
+        				explosion = new Explosion(0,0, mainStage);
+        				explosion.centerAtActor(enemy);
+        				explosionSound.play(effectVolume);
+        				enemy.remove();
+        				points = points + 5;
+        			}
+        		}
+        	}
+        }
+        
+        //Normal shoot
+        
+        for(BaseActor spaceBullet: BaseActor.getList(mainStage, SpaceBullet.class.getName())) {
+        	
+        	if(spaceBullet.overlaps(boss)) {
+        		starCount++;
+        		if(starCount == 5) {
+        			coin = new Coin(boss.getX(), boss.getY(), mainStage);
+        			starCount = 0;
+        		}
+        		
+        		shieldBallCount++;
+        		if(shieldBallCount == 10) {
+        			shieldBall = new ShieldBall(player.getX(), player.getY() + 700, mainStage);
+        			shieldBallCount = 0;
+        		}
+        		boss.setLife(boss.getLife() - 10);
+        		spaceBullet.remove();
+        		
+        		if(boss.getLife() <= 0) {
+        			Explosion2 explosion = new Explosion2(0,0, mainStage);
+    				explosion.centerAtActor(boss);
+    				explosionSound.play(effectVolume);
+        			boss.remove();
+        			bossDie = true;
+        			points = points + 50;
+        		}
+        	}
+        	
+        	for(BaseActor enemy: BaseActor.getList(mainStage, Enemy.class.getName())) {
+        		if(spaceBullet.overlaps(enemy)) {
+        			enemy.setLife(enemy.getLife() - 1);
+        			spaceBullet.remove();
+        			
+        			if(enemy.getLife() <= 0) {
+        				explosion = new Explosion(0,0, mainStage);
+        				explosion.centerAtActor(enemy);
+        				explosionSound.play(effectVolume);
+        				enemy.remove();
+        				points = points + 5;
+        			}
+        			
+        		}
+        		
+        	}
+        	
+        	for(BaseActor enemy: BaseActor.getList(mainStage, Enemy2.class.getName())) {
+        		
+        		
+        		if(spaceBullet.overlaps(enemy)) {
+        			enemy.setLife(enemy.getLife() - 1);
+        			spaceBullet.remove();
+        			if(enemy.getLife() <= 0) {
+        				explosion = new Explosion(0,0, mainStage);
+        				explosion.centerAtActor(enemy);
+        				explosionSound.play(effectVolume);
+        				enemy.remove();
+        				points = points + 5;
+        			}
+        		}
+        	}
+        	
+        	for(BaseActor enemy: BaseActor.getList(mainStage, Enemy3.class.getName())) {
+        		if(spaceBullet.overlaps(enemy)) {
+        			enemy.setLife(enemy.getLife() - 1);
+        			spaceBullet.remove();
+        			if(enemy.getLife() <= 0) {
+        				explosion = new Explosion(0,0, mainStage);
+        				explosion.centerAtActor(enemy);
+        				explosionSound.play(effectVolume);
+        				enemy.remove();
+        				points = points + 5;
+        			}
+        		}
+        	}
+        	
+        	for(BaseActor enemy: BaseActor.getList(mainStage, EnemyKamikaze.class.getName())) {
+        		if(spaceBullet.overlaps(enemy)) {
+        			enemy.setLife(enemy.getLife() - 1);
+        			spaceBullet.remove();
+        			if(enemy.getLife() <= 0) {
+        				explosion = new Explosion(0,0, mainStage);
+        				explosion.centerAtActor(enemy);
+        				explosionSound.play(effectVolume);
+        				enemy.remove();
+        				points = points + 5;
+        			}
+        		}
+        	}
+        }
+        
+        
+        for(BaseActor enemy: BaseActor.getList(mainStage, Enemy.class.getName())) {
+    		if(player.overlaps(enemy)) {
+    			explosion = new Explosion(0,0, mainStage);
+				explosion.centerAtActor(enemy);
+				explosionSound.play(effectVolume);
+    			enemy.remove();
+    			points = points + 5;	
+    		}
+    		enemy.setX(player.getX());
+    	}
+    	
+    	for(BaseActor enemy: BaseActor.getList(mainStage, Enemy2.class.getName())) {
+    		if(player.overlaps(enemy)) {
+    			explosion = new Explosion(0,0, mainStage);
+				explosion.centerAtActor(enemy);
+				explosionSound.play(effectVolume);
+    			enemy.remove();
+    			points = points + 5;
+    		}
+    		enemy.setX(player.getX());
+    	}
+    	
+    	for(BaseActor enemy: BaseActor.getList(mainStage, Enemy3.class.getName())) {
+    		if(player.overlaps(enemy)) {
+    			explosion = new Explosion(0,0, mainStage);
+				explosion.centerAtActor(enemy);
+				explosionSound.play(effectVolume);
+    			enemy.remove();
+    			points = points + 5;
+    		}
+    		
+    		enemy.setX(player.getX());
+    		
+    	}
+    	
+    	for(BaseActor enemy: BaseActor.getList(mainStage, EnemyKamikaze.class.getName())) {
+    		if(player.overlaps(enemy)) {
+    			explosion = new Explosion(0,0, mainStage);
+				explosion.centerAtActor(enemy);
+				explosionSound.play(effectVolume);
+    			enemy.remove();
+    			points = points + 5;
+    		}
+    		
+    	}
+        
+        
+        if(bossDie) {
+        	 player.setShieldPower(100);
+        	 music.stop();
+        	 player.remove();
+        	 boss.remove();
+        	 youWin = new BaseActor(110, 400, uiStage);
+        	 youWin.loadTexture("assets/buttons/youwin.png");
+        	 win.play();
+            if(points > basePoints) {
+            	properties.setProperty("actualpoints4", String.valueOf(points));
+            	try {
+    				properties.store(new FileOutputStream("datos.conf"), "Fichero de datos");
+    			} catch (IOException e1) {
+    				// TODO Auto-generated catch block
+    				e1.printStackTrace();
+    			}
+            }
+            initButtons();
+            
+             
+        }
+        
+        
+        if(gameOver) {
+        	player.setShieldPower(100);
+        	player.setLife(0);
+        	music.stop();
+        	lose.play();
+        	player.remove();
+        	gameOverTitle = new BaseActor(70, 400, uiStage);
+        	gameOverTitle.loadTexture("assets/buttons/gameover.png");
+        	initButtons();
+        	
+        }
+        
+        if(Gdx.input.isKeyPressed(Keys.ESCAPE)) {
+        	MyGame.setActiveScreen( new LevelScreen() );
+        	music.stop();
+        }
+        
+        if(!gameOver && !bossDie) {
+        	 newEnemy();
+             newEnemy2();
+             newEnemy3();
+             newEnemyKamikaze();
+        }
+        
+       
+        if(yBoss) {
+        	yBossPosition = yBossPosition + 1.00f;
+        	if(yBossPosition == 100.00f) {
+        		yBoss = false;
+        	}
+        }
+        else {
+        	yBossPosition = yBossPosition - 1.00f;
+        	if(yBossPosition == 0.00f) {
+        		yBoss = true;
+        	}
+        }
+        
+        boss.setY(yBossPosition + player.getY() + 350);
+        
+        if(xBoss) {
+        	xBossPosition = xBossPosition + 5.00f;
+        	if(xBossPosition == 380.00f) {
+        		xBoss = false;
+        	}
+        }
+        else {
+        	xBossPosition = xBossPosition - 5.00f;
+        	if(xBossPosition == 0.00f) {
+        		xBoss = true;
+        	}
+        }
+        
+        boss.setX(xBossPosition);
+        
+	}
+	
+	private void shootPlayer() {
+		if(!gameOver && !bossDie) {
+			long time = System.currentTimeMillis();
+			if(lastShoot - time < -300) {
+				lastShoot = time;
+				SpaceBullet redBullet = new SpaceBullet(player.getX(), player.getY(), mainStage);
+				redBullet.centerAtActor(player);
+				redBullet.setRotation(player.getFacingAngle());
+	        	redBullet.setMotionAngle(90);
+	        	laser.play(effectVolume);
+			}
+		}	
+	}
+	
+	private void shootPlayerPower() {
+		if(!gameOver && !bossDie) {
+			long time = System.currentTimeMillis();
+			if(lastShoot - time < -200) {
+				lastShoot = time;
+				SpaceBullet2 spaceBullet = new SpaceBullet2(player.getX(), player.getY(), mainStage);
+				spaceBullet.centerAtActor(player);
+				spaceBullet.setRotation(player.getFacingAngle());
+	        	spaceBullet.setMotionAngle(90);
+	        	laser.play(effectVolume);
+			}
+		}	
+	}
+	
+	private void shootPlayerSmall() {
+		if(!gameOver & !bossDie) {
+			long time = System.currentTimeMillis();
+			if(lastSmallBullet - time < -300) {
+				lastSmallBullet = time;
+				SpaceBulletSmall spaceBulletSmall = new SpaceBulletSmall(player.getX() + 10, player.getY() + 5, mainStage);
+				spaceBulletSmall.setMotionAngle(90);
+				
+				SpaceBulletSmall spaceBulletSmall2 = new SpaceBulletSmall(player.getX() + 60, player.getY() + 5, mainStage);
+				spaceBulletSmall2.setMotionAngle(90);
+			}
+		}
+	}
+	
+	private void newEnemy() {
+		long time = System.currentTimeMillis();
+		if(lastEnemy - time < -7000) {
+			lastEnemy = time;
+			Enemy enemy = new Enemy(player.getX(), player.getY() + 650, mainStage);
+		}
+	}
+	
+	private void newEnemy2() {
+		long time = System.currentTimeMillis();
+		if(lastEnemy2 - time < -8000) {
+			lastEnemy2 = time;
+			Enemy2 enemy = new Enemy2(player.getX(), player.getY() + 650, mainStage);
+			enemy.setLife(2);
+		}
+	}
+	
+	private void newEnemy3() {
+		long time = System.currentTimeMillis();
+		if(lastEnemy3 - time < -15000) {
+			lastEnemy3 = time;
+			Enemy3 enemy = new Enemy3(player.getX(), player.getY() + 650, mainStage);
+			enemy.setLife(3);
+		}
+	}
+	
+	private void newEnemyKamikaze() {
+		long time = System.currentTimeMillis();
+		if(lastEnemy4 - time < -1000) {
+			lastEnemy4 = time;
+			EnemyKamikaze enemy = new EnemyKamikaze(MathUtils.random(0, 500), player.getY() + 650, mainStage);
+		}
+	}
+	
+	private void initButtons() {
+		returnButton = new Button(buttonStyleReturn1);
+		returnButton.setPosition(200, 300);
+		uiStage.addActor(returnButton);
+		
+		returnButton.addListener(
+				(Event e) -> {
+					if ( !(e instanceof InputEvent) ||
+							!((InputEvent)e).getType().equals(Type.touchDown) )
+							return false;
+							music.stop();
+							MyGame.setActiveScreen( new LevelScreen() );
+							return false;
+				}
+		);
+		
+	}
+	
+}

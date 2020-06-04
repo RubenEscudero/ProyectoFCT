@@ -1,0 +1,58 @@
+package characters;
+
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Array;
+
+import base.BaseActor;
+import bullets.SmallBullet;
+import bullets.SmallBullet2;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
+
+public class Enemy3 extends BaseActor{
+	Animation north;
+	Animation south;
+	Animation east;
+	Animation west;
+	float facingAngle;	
+	long lastSmallBullet;
+	
+	public Enemy3(float x, float y, Stage s) {
+		super(x, y, s);
+		String[] filenames = 
+            {"assets/characters/ballorange1.png", "assets/characters/ballorange2.png",
+            		"assets/characters/ballorange3.png", "assets/characters/ballorange4.png"};
+
+        loadAnimationFromFile(filenames, 0.1f, true);
+        
+		facingAngle = 270;
+		setBoundaryPolygon(8);
+		setSize(40, 40);
+		
+		setSpeed(370);
+		accelerateAtAngle(90);
+		setMotionAngle(90);
+		boundToWorld();
+	}
+	
+	public void act(float dt) {
+		super.act(dt);
+		
+		long time = System.currentTimeMillis();
+		if(lastSmallBullet - time < -300) {
+			lastSmallBullet = time;
+			SmallBullet2 smallBullet = new SmallBullet2(0, 0, getStage());
+			smallBullet.centerAtActor(this);
+			smallBullet.setMotionAngle(-90);
+			smallBullet.setSpeed(300);
+			
+		}
+		applyPhysics(dt);
+		boundToWorld();
+	}
+
+}

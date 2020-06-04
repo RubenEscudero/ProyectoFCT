@@ -1,0 +1,61 @@
+package characters;
+
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Array;
+
+import base.BaseActor;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
+
+public class Boss2 extends BaseActor{
+	Animation north;
+	Animation south;
+	Animation east;
+	Animation west;
+	float facingAngle;	
+	
+	public Boss2(float x, float y, Stage s) {
+		super(x, y, s);
+		String[] filenames = 
+            {"assets/characters/botred1.png", "assets/characters/botred2.png",
+            		"assets/characters/botred3.png", "assets/characters/botred4.png"};
+
+        loadAnimationFromFile(filenames, 0.1f, true);
+        
+		setBoundaryPolygon(8);
+		
+		setAcceleration(900);
+	    setMaxSpeed(900);
+	    
+	    setBoundaryPolygon(8);
+	}
+	
+	public void act(float dt) {
+		super.act(dt);
+		
+		if (Gdx.input.isKeyPressed(Keys.A)) {
+       	 accelerateAtAngle(180);
+       }   
+       else if (Gdx.input.isKeyPressed(Keys.D)) {
+       	accelerateAtAngle(0);
+       }
+       else if (Gdx.input.isKeyPressed(Keys.UP)) {
+       	 accelerateAtAngle(90);
+       }   
+       else if (Gdx.input.isKeyPressed(Keys.DOWN)) {
+       	accelerateAtAngle(270);
+       }
+		
+		applyPhysics(dt);
+		boundToWorld();
+	}
+	
+	public float getFacingAngle(){
+		return facingAngle;
+	}
+}

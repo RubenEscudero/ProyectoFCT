@@ -1,0 +1,27 @@
+1586774859093	Copy compilation unit
+1586774865359	Copy compilation unit
+1586774876464	Copy compilation unit
+1586790851124	Extract method 'sortPlayers'
+1586944559532	Rename method 'shootRedBullet'
+1586947391890	Rename local variable 'redBullet'
+1587046457057	Rename local variable 'blueBullet'
+1587129569712	Copy compilation unit
+1587143101718	Copy compilation unit
+1587143177867	Rename field 'bossLevel2'
+1587201265445	Copy compilation unit
+1587201297736	Rename method 'shootRedBullet'
+1587201339096	Rename field 'lastRedBulletShoot'
+1587205006301	Copy compilation unit
+1587206980002	Copy compilation unit
+1587207019851	Rename type 'rayBullet'
+1587207270280	Delete element
+1587209250533	Copy compilation unit
+1587210315569	Rename local variable 'redBullet'
+1587211349421	Copy compilation unit
+1587280701035	Copy compilation unit
+1587282266556	Rename type 'Boss2'
+1587284670876	Copy compilation unit
+1587285220781	Copy compilation unit
+1587288425607	Copy compilation unit
+1587291085138	Copy compilation unit
+1587291949182	Copy compilation unit

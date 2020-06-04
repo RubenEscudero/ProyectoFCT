@@ -1,0 +1,126 @@
+package screens;
+
+import java.util.function.Function;
+
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.Button;
+import com.badlogic.gdx.scenes.scene2d.ui.Button.ButtonStyle;
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.audio.Music;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.scenes.scene2d.utils.TextureRegionDrawable;
+import com.badlogic.gdx.scenes.scene2d.Event;
+import com.badlogic.gdx.scenes.scene2d.InputEvent;
+import com.badlogic.gdx.scenes.scene2d.InputEvent.Type;
+
+import base.BaseActor;
+import base.BaseScreen;
+import game.MyGame;
+
+public class MenuScreen extends BaseScreen implements Function{
+	
+	private boolean changeColorButtonState;
+	private Button startLevels;
+	private Button buttonScores;
+	private ButtonStyle buttonStyle;
+	private ButtonStyle buttonStyle2;
+	private ButtonStyle buttonStyle3;
+	private ButtonStyle buttonStyle4;
+	private long changeColorButton;
+	private Music music;
+	
+	@Override
+	public void initialize() {
+		changeColorButton = System.currentTimeMillis();
+		
+		BaseActor background = new BaseActor(0, 0, mainStage);
+		background.loadTexture("assets/backgrounds/nebulosa.jpg");
+		background.setSize(800, 600);
+		
+		buttonStyle = new ButtonStyle();
+		
+		Texture buttonTex = new Texture(Gdx.files.internal("assets/buttons/buttonLevels.png"));
+		TextureRegion buttonRegion = new TextureRegion(buttonTex);
+		buttonStyle.up = new TextureRegionDrawable(buttonRegion);
+		
+		buttonStyle2 = new ButtonStyle();
+		
+		Texture buttonTex2 = new Texture(Gdx.files.internal("assets/buttons/buttonLevels2.png"));
+		TextureRegion buttonRegion2 = new TextureRegion(buttonTex2);
+		buttonStyle2.up = new TextureRegionDrawable(buttonRegion2);
+
+
+		buttonStyle3 = new ButtonStyle();
+		
+		Texture buttonTex3 = new Texture(Gdx.files.internal("assets/buttons/buttonScores.png"));
+		TextureRegion buttonRegion3 = new TextureRegion(buttonTex3);
+		buttonStyle3.up = new TextureRegionDrawable(buttonRegion3);
+		
+		buttonStyle4 = new ButtonStyle();
+		
+		Texture buttonTex4 = new Texture(Gdx.files.internal("assets/buttons/buttonScores2.png"));
+		TextureRegion buttonRegion4 = new TextureRegion(buttonTex4);
+		buttonStyle4.up = new TextureRegionDrawable(buttonRegion4);
+		
+		startLevels = new Button(buttonStyle);
+		startLevels.setPosition(270, 380);
+		uiStage.addActor(startLevels);
+		
+		buttonScores = new Button(buttonStyle3);
+		buttonScores.setPosition(270, 180);
+		uiStage.addActor(buttonScores);
+		
+		startLevels.addListener(
+				(Event e) -> {
+					if ( !(e instanceof InputEvent) ||
+							!((InputEvent)e).getType().equals(Type.touchDown) )
+							return false;
+							MyGame.setActiveScreen( new LevelScreen() );
+							return false;
+				}
+		);
+		
+		buttonScores.addListener(
+				(Event e) -> {
+					if ( !(e instanceof InputEvent) ||
+							!((InputEvent)e).getType().equals(Type.touchDown) )
+							return false;
+							MyGame.setActiveScreen( new LevelScreen() );
+							return false;
+				}
+		);
+		
+		music = Gdx.audio.newMusic(Gdx.files.internal("assets/music/Heartbreak "))
+	}
+
+	@Override
+	public void update(float dt) {
+		changeButton();
+	}
+	
+	private void changeButton() {
+		long time = System.currentTimeMillis();
+		if(changeColorButton - time < -500){
+			changeColorButton = time;
+			if(changeColorButtonState) {
+				startLevels.setStyle(buttonStyle);
+				buttonScores.setStyle(buttonStyle3);
+				changeColorButtonState = false;
+			}
+			else {
+				startLevels.setStyle(buttonStyle2);
+				buttonScores.setStyle(buttonStyle4);
+				changeColorButtonState = true;
+			}
+			
+		}
+	}
+	
+	@Override
+	public Object apply(Object t) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+}

@@ -1,0 +1,45 @@
+package characters;
+
+import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.utils.Array;
+
+import base.BaseActor;
+
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input.Keys;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Animation;
+import com.badlogic.gdx.graphics.g2d.TextureRegion;
+import com.badlogic.gdx.math.MathUtils;
+
+public class Boss2 extends BaseActor{
+	Animation north;
+	Animation south;
+	Animation east;
+	Animation west;
+	float facingAngle;	
+	
+	public Boss2(float x, float y, Stage s) {
+		super(x, y, s);
+		String[] filenames = 
+            {"assets/characters/_0000_Layer-1.png", "assets/characters/_0001_Layer-2.png",
+            		"assets/characters/_0002_Layer-3.png", "assets/characters/_0003_Layer-4.png"};
+
+        loadAnimationFromFile(filenames, 0.1f, true);
+        setSize(100, 100);
+	    
+	    setBoundaryPolygon(8);
+	}
+	
+	public void act(float dt) {
+		super.act(dt);
+	
+		
+		applyPhysics(dt);
+		boundToWorld();
+	}
+	
+	public float getFacingAngle(){
+		return facingAngle;
+	}
+}
